@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import Utils
 import glob
 import pyfits
+from scipy.ndimage.interpolation import shift as img_shift
 plt.style.use('ggplot')
 
 ############################ Parameter #######################
@@ -59,31 +60,24 @@ median_image = np.median(all_data,axis=2)
 
 # Graph every image:
 for i in range(len(all_images)):
+    # Substract the sky:
     diff_image = all_images[i]-median_image
-    sigma = np.sqrt(np.var(diff_image))
+    # Get centroid of brightest star on sky-substracted image:
     x,y = Utils.get_centroid(diff_image)
+    # Rotate the image:
     rotated_image = Utils.rotate_image(diff_image,all_headers[i])
-    im = plt.imshow(diff_image)
+    # Get the centers of the original image:
     y_c = diff_image.shape[0]/2.
     x_c = diff_image.shape[1]/2.
-    plt.plot(x_c,y_c,'x')
-    im.set_clim(np.median(diff_image)-sigma/2.,np.median(diff_image)+sigma/2.)
-    plt.plot(y,x,'go')
-    plt.show()
+    # Get centers of the rotated image (everything is rotated w/r to this):
     yoff = rotated_image.shape[0]/2.
     xoff = rotated_image.shape[1]/2.
-    plt.plot(xoff,yoff,'x')
+    # Calculate the centroid of the rotated star:
     xrot,yrot = Utils.rotate_point(y+(xoff-x_c),x+(yoff-y_c),all_headers[i],xoff,yoff)
-    im = plt.imshow(rotated_image)
-    im.set_clim(np.median(diff_image)-sigma/2.,np.median(diff_image)+sigma/2.) 
-    plt.plot(xrot,yrot,'ro')
+    # Shift the image in order to leave the centroid at the center of the image:
+    shifted_image = img_shift(rotated_image,[(yoff-yrot),(xoff-xrot)])
+    im = plt.imshow(shifted_image)
+    im.set_clim(-50,50)
+    plt.plot(xoff,yoff,'ro')
     plt.show()
-    #plt.plot([y,y],[x,x-1./scale],'-')
-    #plt.plot([y,y],[x,x-4./scale],'--')
-    #plt.plot([y,y],[x,x+1./scale],'-')
-    #plt.plot([y,y],[x,x+4./scale],'--')
-    #plt.plot([y,y-1./scale],[x,x],'-')
-    #plt.plot([y,y-4./scale],[x,x],'--')
-    #plt.plot([y,y+1./scale],[x,x],'-')
-    #plt.plot([y,y+4./scale],[x,x],'--')
 

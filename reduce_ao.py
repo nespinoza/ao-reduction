@@ -76,8 +76,26 @@ for i in range(len(all_images)):
     xrot,yrot = Utils.rotate_point(y+(xoff-x_c),x+(yoff-y_c),all_headers[i],xoff,yoff)
     # Shift the image in order to leave the centroid at the center of the image:
     shifted_image = img_shift(rotated_image,[(yoff-yrot),(xoff-xrot)])
-    im = plt.imshow(shifted_image)
-    im.set_clim(-50,50)
-    plt.plot(xoff,yoff,'ro')
-    plt.show()
+    center_x = int(shifted_image.shape[0]/2.)
+    center_y = int(shifted_image.shape[1]/2.)
+    if i == 0:
+        master_image = np.copy(shifted_image[center_x-200:center_x+200,\
+                                             center_y-200:center_y+200])
+        master_count = np.ones(master_image.shape)
+    else:
+        master_image = master_image + shifted_image[center_x-200:center_x+200,\
+                                                    center_y-200:center_y+200]
+        add_matrix = np.zeros(master_image.shape)
+        xx,yy = np.where(shifted_image[center_x-200:center_x+200,\
+                                      center_y-200:center_y+200]>0.0)
+        add_matrix[xx,yy] = np.ones(len(xx))
+        master_count = master_count + add_matrix
+    #im = plt.imshow(shifted_image)
+    #im.set_clim(-50,50)
+    #plt.plot(xoff,yoff,'ro')
+    #plt.show()
 
+im = plt.imshow(master_image/master_count)
+im.set_clim(-50,50)
+plt.show()
+pyfits.PrimaryHDU(master_image/master_count).writeto('master_ao.fits')

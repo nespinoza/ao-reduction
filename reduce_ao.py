@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import Utils
 import glob
 import pyfits
 plt.style.use('ggplot')
@@ -43,6 +44,7 @@ for i in range(len(x_z)):
 
 # Now create median image from all the science frames:
 all_images = [] 
+all_headers = []
 for i in range(len(image_fnames)):
     data,h = pyfits.getdata(image_fnames[i],header=True)
     data = (data-median_dark)/median_sky
@@ -51,6 +53,7 @@ for i in range(len(image_fnames)):
     else:
         all_data = np.dstack((all_data,np.copy(data)))
     all_images.append(np.copy(data))
+    all_headers.append(h)
 
 median_image = np.median(all_data,axis=2)
 
@@ -60,7 +63,7 @@ for i in range(len(all_images)):
     im = plt.imshow(diff_image)
     sigma = np.sqrt(np.var(diff_image))
     im.set_clim(np.median(diff_image)-sigma,np.median(diff_image)+sigma)
-    x,y = np.where(diff_image == np.max(diff_image))
+    x,y = Utils.get_centroid(diff_image)
     plt.plot([y,y],[x,x-1./scale],'-')
     plt.plot([y,y],[x,x-4./scale],'--')
     plt.plot([y,y],[x,x+1./scale],'-')

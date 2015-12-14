@@ -58,7 +58,9 @@ for i in range(len(image_fnames)):
 
 median_image = np.median(all_data,axis=2)
 
-# Graph every image:
+# Now get final image by rotating and shifting the images. The 
+# rotation is done according to what is posted here: 
+# http://zero.as.arizona.edu/groups/clio2usermanual/wiki/6d927/Calibration_Data.html
 for i in range(len(all_images)):
     # Substract the sky:
     diff_image = all_images[i]-median_image

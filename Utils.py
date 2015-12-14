@@ -43,8 +43,19 @@ def get_centroid(original_image):
 
     return x_init_subimg+popt[1],y_init_subimg+popt[2]
 
+
 from scipy.ndimage.filters import median_filter
 def get_init_centroid(image,half_size = 100,median_window = 30): 
+    """
+    Initial guess for the centroid. The idea is pretty simple: 
+    get rid of deviating pixels with a median filter; hence, create 
+    a smooth version of the image with no outliers. Then, get as first 
+    guess of the centroid the maximum count value (i.e., the brightest 
+    star in the image).
+
+    The idea is then to cut a sub-image around this star, and fit a gaussian 
+    to that.
+    """
     mf = median_filter(image,size=median_window)
     x0,y0 = np.where(mf == np.max(mf))
     x0,y0 = x0[0],y0[0]
@@ -59,12 +70,16 @@ def get_init_centroid(image,half_size = 100,median_window = 30):
 
     return x0-x_init,y0-y_init,x_init,y_init,sub_img
 
+# Rotate the the image according to DEROT = ROTOFF - 180 + NORTHCLIO 
+# (http://zero.as.arizona.edu/groups/clio2usermanual/wiki/6d927/Calibration_Data.html)
 from scipy.ndimage.interpolation import rotate
 NorthClio = -1.80
 def rotate_image(image,header):
     angle = header['ROTOFF'] - 180. + NorthClio
     return rotate(image,header['ROTOFF'] - 180. + NorthClio,reshape=True)
 
+# Given a rotation about x_off and y_off, rotate a point in the same angle 
+# as the image given its x,y coordinates.
 def rotate_point(x,y,header,x_off,y_off):
     angle = -(header['ROTOFF'] - 180. + NorthClio)*np.pi/180.
     return ((x-x_off)*np.cos(angle) - (y-y_off)*np.sin(angle)) + x_off,\

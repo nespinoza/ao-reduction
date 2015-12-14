@@ -60,17 +60,30 @@ median_image = np.median(all_data,axis=2)
 # Graph every image:
 for i in range(len(all_images)):
     diff_image = all_images[i]-median_image
-    im = plt.imshow(diff_image)
     sigma = np.sqrt(np.var(diff_image))
-    im.set_clim(np.median(diff_image)-sigma,np.median(diff_image)+sigma)
     x,y = Utils.get_centroid(diff_image)
-    plt.plot([y,y],[x,x-1./scale],'-')
-    plt.plot([y,y],[x,x-4./scale],'--')
-    plt.plot([y,y],[x,x+1./scale],'-')
-    plt.plot([y,y],[x,x+4./scale],'--')
-    plt.plot([y,y-1./scale],[x,x],'-')
-    plt.plot([y,y-4./scale],[x,x],'--')
-    plt.plot([y,y+1./scale],[x,x],'-')
-    plt.plot([y,y+4./scale],[x,x],'--')
+    rotated_image = Utils.rotate_image(diff_image,all_headers[i])
+    im = plt.imshow(diff_image)
+    y_c = diff_image.shape[0]/2.
+    x_c = diff_image.shape[1]/2.
+    plt.plot(x_c,y_c,'x')
+    im.set_clim(np.median(diff_image)-sigma/2.,np.median(diff_image)+sigma/2.)
+    plt.plot(y,x,'go')
     plt.show()
+    yoff = rotated_image.shape[0]/2.
+    xoff = rotated_image.shape[1]/2.
+    plt.plot(xoff,yoff,'x')
+    xrot,yrot = Utils.rotate_point(y+(xoff-x_c),x+(yoff-y_c),all_headers[i],xoff,yoff)
+    im = plt.imshow(rotated_image)
+    im.set_clim(np.median(diff_image)-sigma/2.,np.median(diff_image)+sigma/2.) 
+    plt.plot(xrot,yrot,'ro')
+    plt.show()
+    #plt.plot([y,y],[x,x-1./scale],'-')
+    #plt.plot([y,y],[x,x-4./scale],'--')
+    #plt.plot([y,y],[x,x+1./scale],'-')
+    #plt.plot([y,y],[x,x+4./scale],'--')
+    #plt.plot([y,y-1./scale],[x,x],'-')
+    #plt.plot([y,y-4./scale],[x,x],'--')
+    #plt.plot([y,y+1./scale],[x,x],'-')
+    #plt.plot([y,y+4./scale],[x,x],'--')
 

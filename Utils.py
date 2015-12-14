@@ -57,9 +57,15 @@ def get_init_centroid(image,half_size = 100,median_window = 30):
     sub_img = image[x_init:x_end,\
                     y_init:y_end]
 
-    print x0-x_init,y0-y_init
     return x0-x_init,y0-y_init,x_init,y_init,sub_img
 
+from scipy.ndimage.interpolation import rotate
+NorthClio = -1.80
 def rotate_image(image,header):
-    NorthClio = -1.80
-    ROTOFF = header['ROTOFF']
+    angle = header['ROTOFF'] - 180. + NorthClio
+    return rotate(image,header['ROTOFF'] - 180. + NorthClio,reshape=True)
+
+def rotate_point(x,y,header,x_off,y_off):
+    angle = -(header['ROTOFF'] - 180. + NorthClio)*np.pi/180.
+    return ((x-x_off)*np.cos(angle) - (y-y_off)*np.sin(angle)) + x_off,\
+           ((x-x_off)*np.sin(angle) + (y-y_off)*np.cos(angle)) + y_off

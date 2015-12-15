@@ -9,7 +9,9 @@ plt.style.use('ggplot')
 ############################ Parameter #######################
 scale = 0.016 # arcsec/pix
 foldername = '/Volumes/SeagateEHD/data/KEPLER/AO/Nestor_star/'
+half_size = 250
 
+use_sky_flats = False
 ##############################################################
 # Get the images:
 image_fnames = glob.glob(foldername+'Nestor1_00*.fit')
@@ -28,20 +30,23 @@ for i in range(len(dark_frames)):
 
 median_dark = np.median(dark_images,axis=2)
 
-# Create master sky:
-for i in range(len(sky_frames)):
-    data,h = pyfits.getdata(sky_frames[i],header=True)
-    data = data - median_dark
-    if i == 0:
-        sky_images = np.copy(data/np.median(data))
-    else:
-        sky_images = np.dstack((sky_images,np.copy(data/np.median(data))))
+if use_sky_flats:
+    # Create master sky:
+    for i in range(len(sky_frames)):
+        data,h = pyfits.getdata(sky_frames[i],header=True)
+        data = data - median_dark
+        if i == 0:
+            sky_images = np.copy(data/np.median(data))
+        else:
+            sky_images = np.dstack((sky_images,np.copy(data/np.median(data))))
 
-# Correct for zeros on sky image:
-median_sky = np.median(sky_images,axis=2)
-x_z,y_z = np.where(median_sky == 0)
-for i in range(len(x_z)):
-    median_sky[x_z,y_z] = 1.0
+    # Correct for zeros on sky image:
+    median_sky = np.median(sky_images,axis=2)
+    x_z,y_z = np.where(median_sky == 0)
+    for i in range(len(x_z)):
+        median_sky[x_z,y_z] = 1.0
+else:
+    median_sky = 1.0
 
 # Now create median image from all the science frames:
 all_images = [] 
@@ -81,15 +86,15 @@ for i in range(len(all_images)):
     center_x = int(shifted_image.shape[0]/2.)
     center_y = int(shifted_image.shape[1]/2.)
     if i == 0:
-        master_image = np.copy(shifted_image[center_x-200:center_x+200,\
-                                             center_y-200:center_y+200])
+        master_image = np.copy(shifted_image[center_x-half_size:center_x+half_size,\
+                                             center_y-half_size:center_y+half_size])
         master_count = np.ones(master_image.shape)
     else:
-        master_image = master_image + shifted_image[center_x-200:center_x+200,\
-                                                    center_y-200:center_y+200]
+        master_image = master_image + shifted_image[center_x-half_size:center_x+half_size,\
+                                                    center_y-half_size:center_y+half_size]
         add_matrix = np.zeros(master_image.shape)
-        xx,yy = np.where(shifted_image[center_x-200:center_x+200,\
-                                      center_y-200:center_y+200]>0.0)
+        xx,yy = np.where(shifted_image[center_x-half_size:center_x+half_size,\
+                                      center_y-half_size:center_y+half_size]>0.0)
         add_matrix[xx,yy] = np.ones(len(xx))
         master_count = master_count + add_matrix
     #im = plt.imshow(shifted_image)
@@ -100,4 +105,7 @@ for i in range(len(all_images)):
 im = plt.imshow(master_image/master_count)
 im.set_clim(-50,50)
 plt.show()
-pyfits.PrimaryHDU(master_image/master_count).writeto('master_ao.fits')
+if use_sky_flats:
+    pyfits.PrimaryHDU(master_image/master_count).writeto('master_ao_w_flats.fits')
+else:
+    pyfits.PrimaryHDU(master_image/master_count).writeto('master_ao_no_flats.fits')

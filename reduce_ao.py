@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import Utils
@@ -12,13 +13,22 @@ foldername = '/Volumes/SeagateEHD/data/KEPLER/AO/Nestor_star/'
 half_size = 250
 
 use_sky_flats = False
-##############################################################
 # Get the images:
 image_fnames = glob.glob(foldername+'Nestor1_00*.fit')
 # Get the darks:
 dark_frames = glob.glob(foldername+'darkN200*.fit')
 # Get sky flats:
 sky_frames = glob.glob(foldername+'skyflat00*.fit')
+
+###############################################################
+
+if use_sky_flats:
+    calib_folder = 'calibration_w_flats'
+else:
+    calib_folder = 'calibration_wo_flats'
+
+if not os.path.exists(calib_folder):
+    os.mkdir(calib_folder)
 
 # Create master dark:
 for i in range(len(dark_frames)):
@@ -51,9 +61,28 @@ else:
 # Now create median image from all the science frames:
 all_images = [] 
 all_headers = []
+
+# Get bad pixel map:
+try:
+    bad_pixel_map = pyfits.getdata(calib_folder+'/badpix_fullframe.fit')
+except:
+    print 'Bad pixel map not found, downloading it...'
+    os.system('wget http://zero.as.arizona.edu/groups/clio2usermanual/wiki/6d927/attachments/1242c/badpix_fullframe.fit')
+    os.system('mv badpix_fullframe.fit '+calib_folder+'/badpix_fullframe.fit')
+    bad_pixel_map = pyfits.getdata(calib_folder+'badpix_fullframe.fit')
+    
+# Get bad pixels to zero, good ones to one:
+bad_pixel_map = np.abs(bad_pixel_map-1)
+
+out_images_folder = calib_folder+'/corrected_images/'
+if not os.path.exists(out_images_folder):
+    os.mkdir(out_images_folder)
+
 for i in range(len(image_fnames)):
     data,h = pyfits.getdata(image_fnames[i],header=True)
-    data = (data-median_dark)/median_sky
+    data = ((data-median_dark)/median_sky)*bad_pixel_map
+    if not os.path.exists(out_images_folder+image_fnames[i].split('/')[-1]):
+        pyfits.PrimaryHDU(data).writeto(out_images_folder+image_fnames[i].split('/')[-1])
     if i == 0:
         all_data = np.copy(data)
     else:
@@ -61,7 +90,11 @@ for i in range(len(image_fnames)):
     all_images.append(np.copy(data))
     all_headers.append(h)
 
-median_image = np.median(all_data,axis=2)
+try:
+    median_image = pyfits.getdata(out_images_folder+'median_image.fits')
+except:
+    median_image = np.median(all_data,axis=2)
+    pyfits.PrimaryHDU(median_image).writeto(out_images_folder+'median_image.fits')
 
 # Now get final image by rotating and shifting the images. The 
 # rotation is done according to what is posted here: 

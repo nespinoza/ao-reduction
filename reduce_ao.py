@@ -130,15 +130,15 @@ for i in range(len(all_images)):
                                       center_y-half_size:center_y+half_size]>0.0)
         add_matrix[xx,yy] = np.ones(len(xx))
         master_count = master_count + add_matrix
-    #im = plt.imshow(shifted_image)
-    #im.set_clim(-50,50)
-    #plt.plot(xoff,yoff,'ro')
-    #plt.show()
 
 im = plt.imshow(master_image/master_count)
 im.set_clim(-50,50)
 plt.show()
+
+if not os.path.exists('results'):
+   os.mkdir('results')
+
 if use_sky_flats:
-    pyfits.PrimaryHDU(master_image/master_count).writeto('master_ao_w_flats.fits')
+    pyfits.PrimaryHDU(master_image/master_count).writeto('results/master_ao_w_flats.fits')
 else:
-    pyfits.PrimaryHDU(master_image/master_count).writeto('master_ao_no_flats.fits')
+    pyfits.PrimaryHDU(master_image/master_count).writeto('results/master_ao_no_flats.fits')

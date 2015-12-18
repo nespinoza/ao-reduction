@@ -8,28 +8,33 @@ from scipy.ndimage.interpolation import shift as img_shift
 plt.style.use('ggplot')
 
 ############################ Parameter #######################
+reduction_name = 'julio'
 scale = 0.016 # arcsec/pix
-foldername = '/Volumes/SeagateEHD/data/KEPLER/AO/Nestor_star/'
-half_size = 250
+#foldername = '/Volumes/SeagateEHD/data/KEPLER/AO/Nestor_star/'
+foldername = '/Volumes/SeagateEHD/data/AO/clio_20151206_07/'
+half_size = 400
 
 use_sky_flats = False
 # Get the images:
-image_fnames = glob.glob(foldername+'Nestor1_00*.fit')
+image_fnames = glob.glob(foldername+'target2_south_00*.fit')#'Nestor1_00*.fit')
 # Get the darks:
-dark_frames = glob.glob(foldername+'darkN200*.fit')
+dark_frames = glob.glob(foldername+'dark00*.fit')
 # Get sky flats:
 sky_frames = glob.glob(foldername+'skyflat00*.fit')
 
 ###############################################################
+if not os.path.exists(reduction_name):
+   os.mkdir(reduction_name)
 
 if use_sky_flats:
-    calib_folder = 'calibration_w_flats'
+    calib_folder = reduction_name+'/calibration_w_flats'
 else:
-    calib_folder = 'calibration_wo_flats'
+    calib_folder = reduction_name+'/calibration_wo_flats'
 
 if not os.path.exists(calib_folder):
     os.mkdir(calib_folder)
 
+print dark_frames
 # Create master dark:
 for i in range(len(dark_frames)):
     data,h = pyfits.getdata(dark_frames[i],header=True)
@@ -69,7 +74,7 @@ except:
     print 'Bad pixel map not found, downloading it...'
     os.system('wget http://zero.as.arizona.edu/groups/clio2usermanual/wiki/6d927/attachments/1242c/badpix_fullframe.fit')
     os.system('mv badpix_fullframe.fit '+calib_folder+'/badpix_fullframe.fit')
-    bad_pixel_map = pyfits.getdata(calib_folder+'badpix_fullframe.fit')
+    bad_pixel_map = pyfits.getdata(calib_folder+'/badpix_fullframe.fit')
     
 # Get bad pixels to zero, good ones to one:
 bad_pixel_map = np.abs(bad_pixel_map-1)
@@ -135,10 +140,10 @@ im = plt.imshow(master_image/master_count)
 im.set_clim(-50,50)
 plt.show()
 
-if not os.path.exists('results'):
-   os.mkdir('results')
+if not os.path.exists(reduction_name+'/results'):
+   os.mkdir(reduction_name+'/results')
 
 if use_sky_flats:
-    pyfits.PrimaryHDU(master_image/master_count).writeto('results/master_ao_w_flats.fits')
+    pyfits.PrimaryHDU(master_image/master_count).writeto(reduction_name+'/results/master_ao_w_flats.fits')
 else:
-    pyfits.PrimaryHDU(master_image/master_count).writeto('results/master_ao_no_flats.fits')
+    pyfits.PrimaryHDU(master_image/master_count).writeto(reduction_name+'/results/master_ao_no_flats.fits')

@@ -17,7 +17,7 @@ half_size = 400
 
 use_sky_flats = False
 median_filtering = True
-window = 150
+window = 200
 # Get the images:
 #image_fnames = glob.glob(foldername+'target2_south_00*.fit')#'Nestor1_00*.fit')
 image_fnames = glob.glob(foldername+'Nestor1_00*.fit')
